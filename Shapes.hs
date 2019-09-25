@@ -1,6 +1,6 @@
 -- | Types and functions for shapes. The list of all tetris pieces.
 module Shapes where
-import Data.List(transpose)
+import Data.List
 import Data.Maybe(isNothing)
 import Test.QuickCheck
 
@@ -83,7 +83,6 @@ allShapes = [S (makeSquares s) | s <- shapes]
 --x represents the num of column for each row and y the num of rows
 emptyShape :: (Int,Int) -> Shape
 emptyShape (x,y) = S (replicate y (replicate x Nothing) )
-
 -- ** A02
 
 -- | The size (width and height) of a shape
@@ -93,8 +92,6 @@ shapeSize (S rows) = (length(rows !! 0) ,length rows)
 -- ** A03
 
 -- | Count how many non-empty squares a shape contains
-aS = S [[Just Black, Nothing],[Just Red]]
-
 blockCount :: Shape -> Int
 blockCount (S rows) = (x*y) - sum [ 1 | s <- rows, s == [Nothing]]
         where (x,y) = shapeSize (S rows)
@@ -104,20 +101,21 @@ blockCount (S rows) = (x*y) - sum [ 1 | s <- rows, s == [Nothing]]
 -- ** A04
 -- | Shape invariant (shapes have at least one row, at least one column,
 -- and are rectangular)
---prop_Shape :: Shape -> Bool
-prop_Shape (S rows) | S rows == 0 = True
-                    | firstCol == (lengthRows !! 0) = prop_Shape(S (tail rows))
+
+prop_Shape :: Shape -> Bool
+prop_Shape (S rows) | length rows > 0 && length (rows !! 0) > 0 = 
+                      length rows == numSameCol
                     | otherwise = False
-        where 
-        firstCol = (rows !! 0)
-        lengthRows = [ length col | col <- rows ]
+  where 
+  firstCol = length (head rows)
+  numSameCol = sum [ 1 | col <- rows, length col == firstCol]
 
 -- * Test data generators
 
 -- ** A05
 -- | A random generator for colours
 rColour :: Gen Colour
-rColour = error "A05 rColour undefined"
+rColour = elements [Black ..]
 
 instance Arbitrary Colour where
   arbitrary = rColour
@@ -125,7 +123,7 @@ instance Arbitrary Colour where
 -- ** A06
 -- | A random generator for shapes
 rShape :: Gen Shape
-rShape = error "A06 rShape undefined"
+rShape = elements allShapes
 
 
 instance Arbitrary Shape where
@@ -133,25 +131,52 @@ instance Arbitrary Shape where
 
 -- * Transforming shapes
 
+s = S [[Just Black,Just Black,Just Black], [Just Black,Nothing,Nothing] ]
+
 -- ** A07
 -- | Rotate a shape 90 degrees
 rotateShape :: Shape -> Shape
-rotateShape = error "A07 rotateShape undefined"
-
+rotateShape (S rows) = S [ nElemCol((x-1) - n) | n <- [0..(x-1)]]
+  where 
+  (x,y) = shapeSize(S rows)
+  nElemCol n = [ (col !! n) | col <- rows]
+  
 -- ** A08
 -- | shiftShape adds empty squares above and to the left of the shape
-shiftShape :: (Int,Int) -> Shape -> Shape
-shiftShape = error "A08 shiftShape undefined"
+shiftY :: Int -> Shape -> Shape
+shiftY y (S rows) = S ((replicate y (replicate x Nothing)) ++ rows)
+  where 
+  x = fst(shapeSize(S rows))
 
--- ** A09
--- | padShape adds empty sqaure below and to the right of the shape
-padShape :: (Int,Int) -> Shape -> Shape
-padShape = error "A09 padShape undefined"
+shiftX :: Int -> Shape -> Shape
+shiftX x (S rows) = S [(replicate x Nothing) ++ col | col <- rows]
+
+shiftShape :: (Int,Int) -> Shape -> Shape
+shiftShape (x,y) sh = shiftX x (shiftY y sh)
+
+-- -- ** A09
+-- -- | padShape adds empty sqaure below and to the right of the shape
+-- padShape :: (Int,Int) -> Shape -> Shape
+-- padShape (x,y) (S rowSh) = S [col ++ (replicate x Nothing) | col <- padY]
+--     where
+--     shYrows = rows (shiftY (y) (S rowSh))
+--     padY = rowSh ++ (take y shYrows)
+
+-- -- ** A09
+-- -- | padShape adds empty sqaure below and to the right of the shape
+-- padShape :: (Int,Int) -> Shape -> Shape
+padShape (x,y) (S rowSh) = S ([col ++ (replicate x Nothing) | col <- rowSh] ++ z)
+  where shiftRow = rows (shiftShape (x,y) (S rowSh))
+        (z,zs) = splitAt y shiftRow
 
 -- ** A10
--- | pad a shape to a given size
-padShapeTo :: (Int,Int) -> Shape -> Shape
-padShapeTo = error "A10 padShapeTo undefined"
+-- -- | pad a shape to a given size
+-- padShapeTo :: (Int,Int) -> Shape -> Shape
+-- padShapeTo (x,y) (S rowSh) = S [col ++ (replicate x Nothing) | col <- padTotY]
+--   where 
+--   shiftShapeRows = rows(shiftShape (x,y) (S rowSh))
+--   padShapeRows = rows(padShape (x,y) (S rowSh))
+--   padTotY = (shiftShapeRows) ++ (drop (length rowSh) padShapeRows)
 
 -- * Comparing and combining shapes
 
