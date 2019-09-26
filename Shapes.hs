@@ -155,28 +155,31 @@ shiftShape :: (Int,Int) -> Shape -> Shape
 shiftShape (x,y) sh = shiftX x (shiftY y sh)
 
 -- -- ** A09
--- -- | padShape adds empty sqaure below and to the right of the shape
+-- -- -- | padShape adds empty square below and to the right of the shape
 -- padShape :: (Int,Int) -> Shape -> Shape
--- padShape (x,y) (S rowSh) = S [col ++ (replicate x Nothing) | col <- padY]
---     where
---     shYrows = rows (shiftY (y) (S rowSh))
---     padY = rowSh ++ (take y shYrows)
+-- padShape (x,y) (S rowSh) = S ([col ++ (replicate x Nothing) | col <- rowSh] ++ z)
+--   where shiftRow = rows (shiftShape (x,y) (S rowSh))
+--         (z,zs) = splitAt y shiftRow
 
--- -- ** A09
--- -- | padShape adds empty sqaure below and to the right of the shape
--- padShape :: (Int,Int) -> Shape -> Shape
-padShape (x,y) (S rowSh) = S ([col ++ (replicate x Nothing) | col <- rowSh] ++ z)
-  where shiftRow = rows (shiftShape (x,y) (S rowSh))
-        (z,zs) = splitAt y shiftRow
+--Not working
+padShape :: (Int,Int) -> Shape -> Shape
+padShape (x,y) sh = rotateThree (shiftShape (x,y) (rotateThree sh) )
+  where
+  rotateThree(x) = rotateShape(rotateShape (x)) 
 
 -- ** A10
 -- -- | pad a shape to a given size
--- padShapeTo :: (Int,Int) -> Shape -> Shape
--- padShapeTo (x,y) (S rowSh) = S [col ++ (replicate x Nothing) | col <- padTotY]
---   where 
---   shiftShapeRows = rows(shiftShape (x,y) (S rowSh))
---   padShapeRows = rows(padShape (x,y) (S rowSh))
---   padTotY = (shiftShapeRows) ++ (drop (length rowSh) padShapeRows)
+
+--GÖR SAMMANSATT FUNC
+--padShapeTo :: ((Int,Int -> Shape -> Shape))
+
+
+padShapeTo :: (Int,Int) -> Shape -> Shape
+padShapeTo (x,y) (S rowSh) = S [col ++ (replicate x Nothing) | col <- padTotY]
+  where 
+  shiftShapeRows = rows(shiftShape (x,y) (S rowSh))
+  padShapeRows = rows(padShape (x,y) (S rowSh))
+  padTotY = (shiftShapeRows) ++ (drop (length rowSh) padShapeRows)
 
 -- * Comparing and combining shapes
 
