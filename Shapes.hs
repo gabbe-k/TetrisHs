@@ -93,7 +93,7 @@ shapeSize (S rows) = (length(rows !! 0) ,length rows)
 
 -- | Count how many non-empty squares a shape contains
 blockCount :: Shape -> Int
-blockCount (S rows) = (x*y) - sum [ 1 | s <- rows, s == [Nothing]]
+blockCount (S rows) = (x*y) - sum [ 1 | s <- rows, i <- s, i == Nothing]
         where (x,y) = shapeSize (S rows)
 
 -- * The Shape invariant
@@ -103,8 +103,8 @@ blockCount (S rows) = (x*y) - sum [ 1 | s <- rows, s == [Nothing]]
 -- and are rectangular)
 
 prop_Shape :: Shape -> Bool
-prop_Shape (S rows) | length rows > 0 && length (rows !! 0) > 0 = 
-                      length rows == numSameCol
+prop_Shape (S rows) | length rows > 0 && firstCol > 0 = 
+                      length rows == numSameCol 
                     | otherwise = False
   where 
   firstCol = length (head rows)
@@ -140,6 +140,12 @@ rotateShape (S rows) = S [ nElemCol((x-1) - n) | n <- [0..(x-1)]]
   where 
   (x,y) = shapeSize(S rows)
   nElemCol n = [ (col !! n) | col <- rows]
+
+{-
+rotateShape :: Shape -> Shape
+rotateShape (S r) = S [x | x <- rs]
+    where 
+      rs = reverse(transpose r) -}
   
 -- ** A08
 -- | shiftShape adds empty squares above and to the left of the shape
@@ -158,15 +164,19 @@ shiftShape (x,y) sh = shiftX x (shiftY y sh)
 -- | padShape adds empty square below and to the right of the shape
 
 padShape :: (Int,Int) -> Shape -> Shape
-padShape (x,y) sh = rotateThree (shiftShape (x,y) (rotateThree sh) )
+padShape (x,y) sh = rotateTwice ( shiftShape (x,y) (rotateTwice sh) )
   where
-  rotateThree(x) = (rotateShape . rotateShape) x
+  rotateTwice(x) = (rotateShape . rotateShape) x
 
 -- ** A10
 -- -- | pad a shape to a given size
 
 padShapeTo :: (Int,Int) -> Shape -> Shape
-padShapeTo (x,y) sh = shiftShape (x,y) (padShape (x,y) sh) 
+padShapeTo (xdim,ydim) sh = padShape (x,y) sh
+    where 
+    (w,h) = shapeSize(sh) 
+    x = xdim - w
+    y = ydim - h
 
 -- * Comparing and combining shapes
 
