@@ -74,7 +74,7 @@ allShapes = [S (makeSquares s) | s <- shapes]
 -- * Some simple functions
 
 --HUR MAN GÖR EN SHAPE: 
--- S [[Just Black],[Just Red]]
+-- S [[Just Black],[Just Red,Just Red,Just Red]]
 -- S [[Nothing]]
 -- S 
 
@@ -154,32 +154,19 @@ shiftX x (S rows) = S [(replicate x Nothing) ++ col | col <- rows]
 shiftShape :: (Int,Int) -> Shape -> Shape
 shiftShape (x,y) sh = shiftX x (shiftY y sh)
 
--- -- ** A09
--- -- -- | padShape adds empty square below and to the right of the shape
--- padShape :: (Int,Int) -> Shape -> Shape
--- padShape (x,y) (S rowSh) = S ([col ++ (replicate x Nothing) | col <- rowSh] ++ z)
---   where shiftRow = rows (shiftShape (x,y) (S rowSh))
---         (z,zs) = splitAt y shiftRow
+-- ** A09
+-- | padShape adds empty square below and to the right of the shape
 
---Not working
 padShape :: (Int,Int) -> Shape -> Shape
 padShape (x,y) sh = rotateThree (shiftShape (x,y) (rotateThree sh) )
   where
-  rotateThree(x) = rotateShape(rotateShape (x)) 
+  rotateThree(x) = (rotateShape . rotateShape) x
 
 -- ** A10
 -- -- | pad a shape to a given size
 
---GÖR SAMMANSATT FUNC
---padShapeTo :: ((Int,Int -> Shape -> Shape))
-
-
 padShapeTo :: (Int,Int) -> Shape -> Shape
-padShapeTo (x,y) (S rowSh) = S [col ++ (replicate x Nothing) | col <- padTotY]
-  where 
-  shiftShapeRows = rows(shiftShape (x,y) (S rowSh))
-  padShapeRows = rows(padShape (x,y) (S rowSh))
-  padTotY = (shiftShapeRows) ++ (drop (length rowSh) padShapeRows)
+padShapeTo (x,y) sh = shiftShape (x,y) (padShape (x,y) sh) 
 
 -- * Comparing and combining shapes
 
