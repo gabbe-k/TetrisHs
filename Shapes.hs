@@ -78,14 +78,13 @@ allShapes = [S (makeSquares s) | s <- shapes]
 --x represents the num of column for each row and y the num of rows
 emptyShape :: (Int,Int) -> Shape
 emptyShape (x,y) = S (replicate y (replicate x Nothing) )
--- ** A02
 
+-- ** A02
 -- | The size (width and height) of a shape
 shapeSize :: Shape -> (Int,Int)
 shapeSize (S rows) = (length(rows !! 0) ,length rows)
 
 -- ** A03
-
 -- | Count how many non-empty squares a shape contains
 blockCount :: Shape -> Int
 blockCount (S rows) = (x*y) - sum [ 1 | s <- rows, i <- s, i == Nothing]
@@ -96,13 +95,11 @@ blockCount (S rows) = (x*y) - sum [ 1 | s <- rows, i <- s, i == Nothing]
 -- ** A04
 -- | Shape invariant (shapes have at least one row, at least one column,
 -- and are rectangular)
-
 prop_Shape :: Shape -> Bool
 prop_Shape (S rows) | length rows > 0 && firstCol > 0 = 
                       length rows == numSameCol 
-                    | otherwise = False
   where 
-  firstCol = length (head rows)
+  firstCol   = length (head rows)
   numSameCol = sum [ 1 | col <- rows, length col == firstCol]
 
 -- * Test data generators
@@ -129,16 +126,9 @@ instance Arbitrary Shape where
 -- ** A07
 -- | Rotate a shape 90 degrees
 rotateShape :: Shape -> Shape
-rotateShape (S rows) = S [ nElemCol((x-1) - n) | n <- [0..(x-1)]]
-  where 
-  (x,y) = shapeSize(S rows)
-  nElemCol n = [ (col !! n) | col <- rows]
-
-{-
-rotateShape :: Shape -> Shape
 rotateShape (S r) = S [x | x <- rs]
     where 
-      rs = reverse(transpose r) -}
+      rs = reverse(transpose r) 
   
 -- ** A08
 -- | shiftShape adds empty squares above and to the left of the shape
@@ -155,7 +145,6 @@ shiftShape (x,y) sh = shiftX x (shiftY y sh)
 
 -- ** A09
 -- | padShape adds empty square below and to the right of the shape
-
 padShape :: (Int,Int) -> Shape -> Shape
 padShape (x,y) sh = rotateTwice ( shiftShape (x,y) (rotateTwice sh) )
   where
@@ -163,13 +152,12 @@ padShape (x,y) sh = rotateTwice ( shiftShape (x,y) (rotateTwice sh) )
 
 -- ** A10
 -- -- | pad a shape to a given size
-
 padShapeTo :: (Int,Int) -> Shape -> Shape
 padShapeTo (xdim,ydim) sh = padShape (x,y) sh
     where 
     (w,h) = shapeSize(sh) 
-    x = xdim - w
-    y = ydim - h
+    x     = xdim - w
+    y     = ydim - h
 
 -- * Comparing and combining shapes
 
