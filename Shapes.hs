@@ -96,11 +96,11 @@ blockCount (S rows) = (x*y) - sum [ 1 | s <- rows, i <- s, i == Nothing]
 -- | Shape invariant (shapes have at least one row, at least one column,
 -- and are rectangular)
 prop_Shape :: Shape -> Bool
-prop_Shape (S rows) | length rows > 0 && firstCol > 0 = 
+prop_Shape (S rows) | length rows > 0 && firstRowLen > 0 = 
                       length rows == numSameCol 
   where 
-  firstCol   = length (head rows)
-  numSameCol = sum [ 1 | col <- rows, length col == firstCol]
+  firstRowLen   = length (head rows)
+  numSameCol = sum [ 1 | row <- rows, length row == firstRowLen]
 
 -- * Test data generators
 
@@ -138,7 +138,7 @@ shiftY y (S rows) = S ((replicate y (replicate x Nothing)) ++ rows)
   x = fst(shapeSize(S rows))
 
 shiftX :: Int -> Shape -> Shape
-shiftX x (S rows) = S [(replicate x Nothing) ++ col | col <- rows]
+shiftX x (S rows) = S [(replicate x Nothing) ++ row | row <- rows]
 
 shiftShape :: (Int,Int) -> Shape -> Shape
 shiftShape (x,y) sh = shiftX x (shiftY y sh)
