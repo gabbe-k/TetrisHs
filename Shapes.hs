@@ -73,11 +73,6 @@ allShapes = [S (makeSquares s) | s <- shapes]
 
 -- * Some simple functions
 
---HUR MAN GÖR EN SHAPE: 
--- S [[Just Black],[Just Red,Just Red,Just Red]]
--- S [[Nothing]]
--- S 
-
 -- ** A01
 --Prints out an empty shape
 --x represents the num of column for each row and y the num of rows
@@ -131,8 +126,6 @@ instance Arbitrary Shape where
 
 -- * Transforming shapes
 
-s = S [[Just Black,Just Black,Just Black], [Just Black,Nothing,Nothing] ]
-
 -- ** A07
 -- | Rotate a shape 90 degrees
 rotateShape :: Shape -> Shape
@@ -183,8 +176,13 @@ padShapeTo (xdim,ydim) sh = padShape (x,y) sh
 -- ** B01
 
 -- | Test if two shapes overlap
+rowsOverlap :: Row -> Row -> Bool
+rowsOverlap [] _          = False
+rowsOverlap (x:xs) (y:ys) | (x == Nothing) || (y == Nothing) = rowsOverlap xs ys
+                          | otherwise = True
+
 overlaps :: Shape -> Shape -> Bool
-s1 `overlaps` s2 = error "A11 overlaps undefined"
+s1 `overlaps` s2 = or [rowsOverlap r1 r2 | r1 <- rows(s1), r2 <- rows(s2)]
 
 -- ** B02
 -- | zipShapeWith, like 'zipWith' for lists
