@@ -165,20 +165,53 @@ padShapeTo (xdim,ydim) sh = padShape (x,y) sh
 
 -- | Test if two shapes overlap
 rowsOverlap :: Row -> Row -> Bool
-rowsOverlap [] _          = False
+rowsOverlap [] _        = False
 rowsOverlap (x:xs) (y:ys) | (x == Nothing) || (y == Nothing) = rowsOverlap xs ys
                           | otherwise = True
+
+--does not work
+-- rowsOverlap [] _        = False
+-- rowsOverlap (Nothing:xs) _   = False
+-- rowsOverlap s s2        = True
 
 overlaps :: Shape -> Shape -> Bool
 s1 `overlaps` s2 = or [rowsOverlap r1 r2 | r1 <- rows(s1), r2 <- rows(s2)]
 
--- ** B02
--- | zipShapeWith, like 'zipWith' for lists
+-- data Shape = S [Row] deriving (Eq)
+-- type Row = [Square]
+
+-- -- ** B02
+-- -- -- | zipShapeWith, like 'zipWith' for lists
+-- zipShapeWith :: (Square->Square->Square) -> Shape -> Shape -> Shape
+-- zipShapeWith f (S rows1) (S rows2) = S ([zipRowWith f r1 r2 | i <- [0..(len - 1)]
+--                                         , r1 <- (rows1 !! i), r2 <- (rows2 !! i)])
+--   where len = (length rows1) `min` (length rows2)
+
 zipShapeWith :: (Square->Square->Square) -> Shape -> Shape -> Shape
-zipShapeWith = error "A12 zipShapeWith undefined"
+zipShapeWith f (S r1) (S r2) = S (zipRows f r1 r2)
+
+zipRows :: (Square -> Square -> Square) -> [Row] -> [Row] -> [Row]
+zipRows f (x:xs) (y:ys) = (zipRowWith f x y) : zipRows f xs ys
+zipRows _ _      _      = []
+
+zipRowWith :: (Square -> Square -> Square) -> Row -> Row -> Row
+zipRowWith f (x:xs) (y:ys) = (f x y) : zipRowWith f xs ys
+zipRowWith _ _      _      = []
+
+blackClashes :: Shape -> Shape -> Shape
+blackClashes s1 s2 = zipShapeWith clash s1 s2  
+  where clash :: Square -> Square -> Square 
+        clash Nothing Nothing = Nothing
+        clash Nothing s       = s
+        clash s       Nothing = s
+        clash (Just c1) (Just c2) = Just Black
 
 -- ** B03
 -- | Combine two shapes. The two shapes should not overlap.
 -- The resulting shape will be big enough to fit both shapes.
 combine :: Shape -> Shape -> Shape
-s1 `combine` s2 = error "A13 zipShapeWith undefined"
+s1 `combine` s2 = error "gg"
+
+r1 = rows(allShapes !! 5)
+r2 = rows(allShapes !! 4)
+  
