@@ -213,7 +213,8 @@ combine :: Shape -> Shape -> Shape
 (S (x:xs)) `combine` (S (y:ys)) | rowsOverlap x y = (S (xs)) `combine` (add1Col (y:ys))
                                 | otherwise = (S (xs)) `combine` (S (ys))
   where add1Col r1 = shiftShape (1,0) (S r1)
- 
+(S [])     `combine` _          = []
+   
 
 -- combine :: Shape -> Shape -> Shape
 -- (S (x:xs)) `combine` (S (y:ys)) | rowsOverlap x y = zipRowWith (++) x y
