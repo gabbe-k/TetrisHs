@@ -210,7 +210,20 @@ blackClashes s1 s2 = zipShapeWith clash s1 s2
 -- | Combine two shapes. The two shapes should not overlap.
 -- The resulting shape will be big enough to fit both shapes.
 combine :: Shape -> Shape -> Shape
-s1 `combine` s2 = error "gg"
+(S (x:xs)) `combine` (S (y:ys)) | rowsOverlap x y = (S (xs)) `combine` (add1Col (y:ys))
+                                | otherwise = (S (xs)) `combine` (S (ys))
+  where add1Col r1 = shiftShape (1,0) (S r1)
+ 
+
+-- combine :: Shape -> Shape -> Shape
+-- (S (x:xs)) `combine` (S (y:ys)) | rowsOverlap x y = zipRowWith (++) x y
+--                                 | otherwise = (S xs) `combine` (S ys)
+--   where colCheck :: Square -> Square -> Square
+--         colCheck Nothing s       = s
+--         colCheck s       Nothing = s
+--         colCheck (Just c1) (Just c2) = Just Black
+--         add1Col r1 = shiftShape (1,0) (S r1)
+
 
 r1 = rows(allShapes !! 5)
 r2 = rows(allShapes !! 4)
