@@ -206,44 +206,17 @@ blackClashes s1 s2 = zipShapeWith clash s1 s2
 -- | Combine two shapes. The two shapes should not overlap.
 -- The resulting shape will be big enough to fit both shapes.
 -- combine :: Shape -> Shape -> Shape
-s1 = (allShapes !! 0)
-s2 = shiftShape (1,0) (allShapes !! 0)
-s1 `combine` s2 = S([ combineRows r1 r2 | r1 <- rows(s1 !! i) , r2 <- rows(s2 !! i), i <- [0..(len-1)]])   
-  where len = (length (rows s1)) `min` (length (rows s2))                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
+s1 = (rotateShape . rotateShape) (allShapes !! 5)
+s2 = shiftShape (1,0) (allShapes !! 5)
 
-combineRows :: Row -> Row -> Row
-combineRows r (Nothing:ys)            = r ++ (ys)
-combineRows (Nothing:xs) (Nothing:ys) = xs ++ ys
-combineRows r r2                      = r ++ r2
+s1 `combine` s2 = zipShapeWith colCheck (padShapeTo (len1 + len2,maxH) s1) (padShapeTo (0,maxH) s2)
+  where        
+  colCheck :: Square -> Square -> Square 
+  colCheck Nothing Nothing = Nothing
+  colCheck Nothing s       = s
+  colCheck s       Nothing = s
+  colCheck (Just c1) (Just c2) = error "Shapes can not merge"
 
-                          
-
-
-
-
-
-
-
--- s1 `combine` s2 | s1 `overlaps` s2 = s1 `combine` (add1Col s2)
---                 | otherwise = S ([ sq1 ++ sq2 | sq1 <- (allSquares s1) , sq2 <- (allSquares s2)])
---   -- combineRows r1 r2 = zipRows
---   where add1Col r1 = shiftShape (1,0) r1
---         f :: Square -> Square -> Square 
---         f s Nothing = s
---         f Nothing _ = Nothing
---         f (Just c1) (Just c2) = error "hh"
---         allSquares sh = [ sq | sq <- (rows sh)]
--- (S [])     `combine` _          = []
--- (S (xs)) `combine` (add1Col (y:ys))
---                                 | otherwise = (S (xs)) `combine` (S (ys))
---   where f s1 s2 = s1 s2
-   
-
--- combine :: Shape -> Shape -> Shape
--- (S (x:xs)) `combine` (S (y:ys)) | rowsOverlap x y = zipRowWith (++) x y
---                                 | otherwise = (S xs) `combine` (S ys)
---   where colCheck :: Square -> Square -> Square
---         colCheck Nothing s       = s
---         colCheck s       Nothing = s
---         colCheck (Just c1) (Just c2) = Just Black
---         add1Col r1 = shiftShape (1,0) (S r1)
+  len1 = length (rows s1)
+  len2 = length (rows s2)
+  maxH = len1 `max` len2
