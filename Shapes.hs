@@ -169,24 +169,11 @@ rowsOverlap [] _        = False
 rowsOverlap (x:xs) (y:ys) | (x == Nothing) || (y == Nothing) = rowsOverlap xs ys
                           | otherwise = True
 
---does not work
--- rowsOverlap [] _        = False
--- rowsOverlap (Nothing:xs) _   = False
--- rowsOverlap s s2        = True
-
 overlaps :: Shape -> Shape -> Bool
 s1 `overlaps` s2 = or [rowsOverlap r1 r2 | r1 <- rows(s1), r2 <- rows(s2)]
 
--- data Shape = S [Row] deriving (Eq)
--- type Row = [Square]
-
 -- -- ** B02
 -- -- -- | zipShapeWith, like 'zipWith' for lists
--- zipShapeWith :: (Square->Square->Square) -> Shape -> Shape -> Shape
--- zipShapeWith f (S rows1) (S rows2) = S ([zipRowWith f r1 r2 | i <- [0..(len - 1)]
---                                         , r1 <- (rows1 !! i), r2 <- (rows2 !! i)])
---   where len = (length rows1) `min` (length rows2)
-
 zipShapeWith :: (Square->Square->Square) -> Shape -> Shape -> Shape
 zipShapeWith f (S r1) (S r2) = S (zipRows f r1 r2)
 
@@ -206,8 +193,8 @@ blackClashes s1 s2 = zipShapeWith clash s1 s2
 -- | Combine two shapes. The two shapes should not overlap.
 -- The resulting shape will be big enough to fit both shapes.
 -- combine :: Shape -> Shape -> Shape
-s1 = (rotateShape . rotateShape) (allShapes !! 5)
-s2 = shiftShape (1,0) (allShapes !! 5)
+s1 = (allShapes !! 0)
+s2 = shiftShape (1,0) (allShapes !! 1)
 
 s1 `combine` s2 = zipShapeWith colCheck (padShapeTo (len1 + len2,maxH) s1) (padShapeTo (0,maxH) s2)
   where        
