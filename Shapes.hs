@@ -162,7 +162,6 @@ padShapeTo (xdim,ydim) sh = padShape (x,y) sh
 -- * Comparing and combining shapes
 
 -- ** B01
-
 -- | Test if two shapes overlap
 rowsOverlap :: Row -> Row -> Bool
 rowsOverlap [] _        = False
@@ -170,16 +169,17 @@ rowsOverlap (x:xs) (y:ys) | (x == Nothing) || (y == Nothing) = rowsOverlap xs ys
                           | otherwise = True
 
 overlaps :: Shape -> Shape -> Bool
-s1 `overlaps` s2 = or [rowsOverlap r1 r2 | r1 <- rows(s1), r2 <- rows(s2)]
+s1 `overlaps` s2 = or [rowsOverlap r1 r2 | r1 <- (rows s1), r2 <- (rows s2)]
 
--- -- ** B02
--- -- -- | zipShapeWith, like 'zipWith' for lists
+-- ** B02
+-- | zipShapeWith, like 'zipWith' for lists
 zipShapeWith :: (Square->Square->Square) -> Shape -> Shape -> Shape
 zipShapeWith f (S r1) (S r2) = S (zipRows f r1 r2)
 
 zipRows :: (Square -> Square -> Square) -> [Row] -> [Row] -> [Row]
 zipRows f (x:xs) (y:ys) = (zipWith f x y) : zipRows f xs ys
-zipRows _ _      _      = []
+zipRows f (xs)   []     = xs
+zipRows f []     (ys)   = ys
 
 blackClashes :: Shape -> Shape -> Shape
 blackClashes s1 s2 = zipShapeWith clash s1 s2  
@@ -192,18 +192,17 @@ blackClashes s1 s2 = zipShapeWith clash s1 s2
 -- ** B03
 -- | Combine two shapes. The two shapes should not overlap.
 -- The resulting shape will be big enough to fit both shapes.
--- combine :: Shape -> Shape -> Shape
-s1 = (allShapes !! 0)
-s2 = shiftShape (1,0) (allShapes !! 1)
+combine :: Shape -> Shape -> Shape
+s1 `combine` s2 = zipShapeWith combClash sh1 sh2
+  where
+    (x1,y1) = shapeSize s1
+    (x2,y2) = shapeSize s2 
+    totsz   = ((max x1 x2), (max y1 y2))
+    sh1     = padShapeTo totsz s1
+    sh2     = padShapeTo totsz s2
 
-s1 `combine` s2 = zipShapeWith colCheck (padShapeTo (len1 + len2,maxH) s1) (padShapeTo (0,maxH) s2)
-  where        
-  colCheck :: Square -> Square -> Square 
-  colCheck Nothing Nothing = Nothing
-  colCheck Nothing s       = s
-  colCheck s       Nothing = s
-  colCheck (Just c1) (Just c2) = error "Shapes can not merge"
-
-  len1 = length (rows s1)
-  len2 = length (rows s2)
-  maxH = len1 `max` len2
+    combClash :: Square -> Square -> Square
+    combClash Nothing   Nothing   = Nothing
+    combClash Nothing   c         = c
+    combClash c         Nothing   = c
+    combClash c         c2        = error "gghh"
