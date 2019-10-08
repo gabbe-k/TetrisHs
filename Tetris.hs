@@ -80,34 +80,38 @@ move v1 (Tetris (v2,s) w sList) = Tetris (v,s) w sList
   where v = vAdd v1 v2
 
 rotate :: Tetris -> Tetris
-rotate (Tetris ((x,y),s0) w sList) = (Tetris ((x,(y-1)), s) w sList)
+rotate (Tetris (v,s0) w sList) = (Tetris (v,s) w sList)
   where s = rotateShape s0
-    
+  
+collision' :: Tetris -> [Bool]
+collision' (Tetris (v,s0) w sList) = colList
+  where 
+    (x,y)   = v
+    s       = place (v,s0)
+    (sw,sh) = shapeSize s
+    (ww,wh) = shapeSize w
+    cRgtLft = sw > ww || x < 0
+    cDwn    = sh > wh
+    cSha    = s `overlaps` w 
+    colList = [cDwn,cSha,cRgtLft]
+
 -- | Checks if part of piece is outside of well, or overlaps anything in the well
 collision :: Tetris -> Bool
-collision (Tetris (v,s0) w sList) = anyTrue
-  where 
-  s       = place (v,s0)
-  (sw,sh) = shapeSize s
-  (ww,wh) = shapeSize w
-  cRgtLft = sw > ww || sw < 0
-  cDwn    = sh > wh
-  cSha    = s `overlaps` w
-  anyTrue = or [cRgtLft,cDwn,cSha]
-
+collision t = or (collision' t) 
 
 -- | Updates the game, makes the falling shape move, or stops it
 tick :: Tetris -> Maybe (Int,Tetris)
-tick t0 | collision t = dropNewPiece t0
+tick t0 | (pieceIsDown) && (collision t)  = dropNewPiece t0
+        | collision t = Just(0,t0)
         | otherwise   = Just (0,t)
     where 
     t   = move (0,1) t0
-    
- 
+    pieceIsDown = ((collision' t) !! 0) || ((collision' t) !! 1)
+     
 movePiece :: Int -> Tetris -> Tetris
 movePiece m t0 | collision t = t0
                | otherwise   = t
-  where t = move (m,(-1)) t0
+  where t = move (m,0) t0
 
 rotatePiece :: Tetris -> Tetris
 rotatePiece t0 | collision t = t0
@@ -115,24 +119,26 @@ rotatePiece t0 | collision t = t0
   where t = rotate t0
 
 dropNewPiece :: Tetris -> Maybe (Int,Tetris)
-dropNewPiece (Tetris (v,s0) w0 sList0) = Just (0, (Tetris ((0,0),s) w sList))
+dropNewPiece (Tetris (v,s0) w0 sList0) 
+             | gOver = Nothing
+             | otherwise = Just (0, (Tetris (startPosition,s) w sList))
   where 
-  w = w0 `combine` s0
-  s = place ((fst startPosition,1), (head sList0)) --is applied to previous shape not next
-  sList = tail sList0  
+  w = w0 `combine` (place (v,s0))
+  s = head sList0
+  sList = tail sList0
+  gOver = place(startPosition,s) `overlaps` w
 
 -- | React to input. The function returns 'Nothing' when it's game over,
 -- and @'Just' (n,t)@, when the game continues in a new state @t@.
 stepTetris :: Action -> Tetris -> Maybe (Int,Tetris)
-stepTetris MoveLeft  t = tick (movePiece (-1) t)
-stepTetris MoveRight t = tick (movePiece (1)  t)
-stepTetris MoveDown  t = tick (move (0,1) t)
-stepTetris Rotate    t = tick (rotatePiece t)
+stepTetris MoveLeft  t = Just (0, (movePiece (-1) t))
+stepTetris MoveRight t = Just (0, (movePiece (1) t))
+stepTetris MoveDown  t = tick (move (0,0) t)
+stepTetris Rotate    t = Just (0, (rotatePiece t))
 stepTetris _ t         = tick t
 
-w1 = addWalls (emptyShape (10,20))
-s2 = shiftShape (5,1) (allShapes !! 4)
-
-
-
+s1  = addWalls(emptyShape(10,20))
+s2  = shiftShape (4,18) (allShapes !! 2)
+h = s1 `combine` s2
+h2 = shiftShape (4,1) (allShapes !! 2)
 

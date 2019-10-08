@@ -163,13 +163,19 @@ padShapeTo (xdim,ydim) sh = padShape (x,y) sh
 
 -- ** B01
 -- | Test if two shapes overlap
-rowsOverlap :: Row -> Row -> Bool
-rowsOverlap [] _        = False
-rowsOverlap (x:xs) (y:ys) | (x == Nothing) || (y == Nothing) = rowsOverlap xs ys
+rowOverlap :: Row -> Row -> Bool
+rowOverlap [] _        = False
+rowOverlap _ []        = False
+rowOverlap (x:xs) (y:ys) | (x == Nothing) || (y == Nothing) = rowOverlap xs ys
                           | otherwise = True
 
+rowsOverlap :: [Row] -> [Row] -> [Bool]
+rowsOverlap r1     []     = []
+rowsOverlap []     r1     = []
+rowsOverlap (x:xs) (y:ys) = (rowOverlap x y) : rowsOverlap xs ys
+
 overlaps :: Shape -> Shape -> Bool
-s1 `overlaps` s2 = or [rowsOverlap r1 r2 | r1 <- (rows s1), r2 <- (rows s2)]
+s1 `overlaps` s2 = or (rowsOverlap (rows s1) (rows s2))
 
 -- ** B02
 -- | zipShapeWith, like 'zipWith' for lists
@@ -177,9 +183,9 @@ zipShapeWith :: (Square->Square->Square) -> Shape -> Shape -> Shape
 zipShapeWith f (S r1) (S r2) = S (zipRows f r1 r2)
 
 zipRows :: (Square -> Square -> Square) -> [Row] -> [Row] -> [Row]
+zipRows f (xs)   []     = []
+zipRows f []     (ys)   = []
 zipRows f (x:xs) (y:ys) = (zipWith f x y) : zipRows f xs ys
-zipRows f (xs)   []     = xs
-zipRows f []     (ys)   = ys
 
 blackClashes :: Shape -> Shape -> Shape
 blackClashes s1 s2 = zipShapeWith clash s1 s2  
@@ -205,4 +211,4 @@ s1 `combine` s2 = zipShapeWith combClash sh1 sh2
     combClash Nothing   Nothing   = Nothing
     combClash Nothing   c         = c
     combClash c         Nothing   = c
-    combClash c         c2        = error "gghh"
+    combClash c         c2        = error "Merged shapes"
