@@ -70,21 +70,24 @@ drawTetris (Tetris (v,p) w _) = addWalls $ w `combine` s
 
 -- | The initial game state
 startTetris :: [Double] -> Tetris
-startTetris rs = Tetris (startPosition,currShape) (emptyShape wellSize) (tail supply)
+startTetris rs = Tetris (startPosition,nwShp) (emptyShape wellSize) (supply)
   where
     index n = floor (n * 7)
-    currShape = head supply
-    supply = [ allShapes !! (index n) | n <- (take 100 rs)]
+    nwShp = head shList
+    supply = tail shList
+    shList = [ allShapes !! (index n) | n <- rs]
     
 -- | Moves the falling piece to a new relative x,y position
 move :: Vector -> Tetris -> Tetris
 move v1 (Tetris (v2,s) w sList) = Tetris (v,s) w sList
   where v = vAdd v1 v2
 
+-- | Rotates the falling piece 90 degrees counter clockwise
 rotate :: Tetris -> Tetris
 rotate (Tetris (v,s0) w sList) = (Tetris (v,s) w sList)
   where s = rotateShape s0
   
+-- | Checks if a piece has collided with the well / other shapes
 collision' :: Tetris -> [Bool]
 collision' (Tetris (v,s0) w sList) = colList
   where 
@@ -109,17 +112,20 @@ tick t0 | (pieceIsDown) && (collision t) = dropNewPiece t0
     where 
     t           = move (0,1) t0
     pieceIsDown = ((collision' t) !! 0) || ((collision' t) !! 1)
-     
+    
+-- | Moves piece x,y coordinates
 movePiece :: (Int, Int) -> Tetris -> Tetris
 movePiece (mX, mY) t0 | collision t = t0
                       | otherwise   = t
   where t = move (mX,mY) t0
 
+-- | Rotates piece if it doesnt collide after the rotate
 rotatePiece :: Tetris -> Tetris
 rotatePiece t0 | collision t = t0
                | otherwise   = t
   where t = rotate t0
 
+-- | Drops a new piece. If the new piece is blocked = Game Over
 dropNewPiece :: Tetris -> Maybe (Int,Tetris)
 dropNewPiece (Tetris (v,s0) w0 sList0) 
              | gOver     = Nothing
@@ -131,14 +137,13 @@ dropNewPiece (Tetris (v,s0) w0 sList0)
   sList = tail sList0
   gOver = place(startPosition,s) `overlaps` w
 
-isNothing s = s == Nothing
+-- | Checks if a row is full. Filter only returns nothing
+-- | If the length of the returned list is 0, then row is full
 rowFull :: Row -> Bool
-rowFull r = length(filter (isNothing) r) == 0
+rowFull r = length(filter (\x -> (x == Nothing)) r) == 0
 
-rowsIndex :: [Row] -> [Int]
-rowsIndex (x:xs) | rowFull x = 1 : rowsIndex xs
-                 | otherwise = rowsIndex xs 
-
+-- | Returns all rows that arent full, then adds 
+-- | Just as many empty rows on top of the rowlist
 clearRows :: [Row] -> (Int,[Row])
 clearRows rows = (deltaRows, newWell)
     where deltaRows = wellHeight - (length newRows)
@@ -146,6 +151,7 @@ clearRows rows = (deltaRows, newWell)
           newWell = (replicate deltaRows emptyRow) ++ newRows
           emptyRow = replicate wellWidth (Nothing)
 
+-- | Clears all full rows in a well
 clearRow :: Shape -> (Int,Shape)
 clearRow (S wr) = (p,(S r))
     where (p,r) = clearRows wr
