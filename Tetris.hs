@@ -70,9 +70,11 @@ drawTetris (Tetris (v,p) w _) = addWalls $ w `combine` s
 
 -- | The initial game state
 startTetris :: [Double] -> Tetris
-startTetris rs = Tetris (startPosition,shape1) (emptyShape wellSize) supply
+startTetris rs = Tetris (startPosition,currShape) (emptyShape wellSize) (tail supply)
   where
-    shape1:supply = repeat (allShapes!!1) -- incomplete !!!
+    index n = floor (n * 7)
+    currShape = head supply
+    supply = [ allShapes !! (index n) | n <- (take 100 rs)]
     
 -- | Moves the falling piece to a new relative x,y position
 move :: Vector -> Tetris -> Tetris
@@ -101,17 +103,17 @@ collision t = or (collision' t)
 
 -- | Updates the game, makes the falling shape move, or stops it
 tick :: Tetris -> Maybe (Int,Tetris)
-tick t0 | (pieceIsDown) && (collision t)  = dropNewPiece t0
-        | collision t = Just(0,t0)
-        | otherwise   = Just (0,t)
+tick t0 | (pieceIsDown) && (collision t) = dropNewPiece t0
+        | collision t                    = Just(0,t0)
+        | otherwise                      = Just (0,t)
     where 
-    t   = move (0,1) t0
+    t           = move (0,1) t0
     pieceIsDown = ((collision' t) !! 0) || ((collision' t) !! 1)
      
-movePiece :: Int -> Tetris -> Tetris
-movePiece m t0 | collision t = t0
-               | otherwise   = t
-  where t = move (m,0) t0
+movePiece :: (Int, Int) -> Tetris -> Tetris
+movePiece (mX, mY) t0 | collision t = t0
+                      | otherwise   = t
+  where t = move (mX,mY) t0
 
 rotatePiece :: Tetris -> Tetris
 rotatePiece t0 | collision t = t0
@@ -120,25 +122,40 @@ rotatePiece t0 | collision t = t0
 
 dropNewPiece :: Tetris -> Maybe (Int,Tetris)
 dropNewPiece (Tetris (v,s0) w0 sList0) 
-             | gOver = Nothing
-             | otherwise = Just (0, (Tetris (startPosition,s) w sList))
+             | gOver     = Nothing
+             | otherwise = Just (p, (Tetris (startPosition,s) clw sList))
   where 
   w = w0 `combine` (place (v,s0))
+  (p,clw) = clearRow w
   s = head sList0
   sList = tail sList0
   gOver = place(startPosition,s) `overlaps` w
 
+isNothing s = s == Nothing
+rowFull :: Row -> Bool
+rowFull r = length(filter (isNothing) r) == 0
+
+rowsIndex :: [Row] -> [Int]
+rowsIndex (x:xs) | rowFull x = 1 : rowsIndex xs
+                 | otherwise = rowsIndex xs 
+
+clearRows :: [Row] -> (Int,[Row])
+clearRows rows = (deltaRows, newWell)
+    where deltaRows = wellHeight - (length newRows)
+          newRows = [ r | r <- rows, not (rowFull r)]
+          newWell = (replicate deltaRows emptyRow) ++ newRows
+          emptyRow = replicate wellWidth (Nothing)
+
+clearRow :: Shape -> (Int,Shape)
+clearRow (S wr) = (p,(S r))
+    where (p,r) = clearRows wr
+
 -- | React to input. The function returns 'Nothing' when it's game over,
 -- and @'Just' (n,t)@, when the game continues in a new state @t@.
 stepTetris :: Action -> Tetris -> Maybe (Int,Tetris)
-stepTetris MoveLeft  t = Just (0, (movePiece (-1) t))
-stepTetris MoveRight t = Just (0, (movePiece (1) t))
-stepTetris MoveDown  t = tick (move (0,0) t)
+stepTetris MoveLeft  t = Just (0, (movePiece (-1, 0) t))
+stepTetris MoveRight t = Just (0, (movePiece (1, 0) t))
+stepTetris MoveDown  t = Just (0, (movePiece (0, 1) t))
 stepTetris Rotate    t = Just (0, (rotatePiece t))
 stepTetris _ t         = tick t
-
-s1  = addWalls(emptyShape(10,20))
-s2  = shiftShape (4,18) (allShapes !! 2)
-h = s1 `combine` s2
-h2 = shiftShape (4,1) (allShapes !! 2)
 
