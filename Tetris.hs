@@ -100,7 +100,8 @@ collision' (Tetris (v,s0) w sList) = colList
     cSha    = s `overlaps` w 
     colList = [cDwn,cSha,cRgtLft]
 
--- | Checks if part of piece is outside of well, or overlaps anything in the well
+-- | Checks if part of piece is outside of well, 
+-- | or overlaps anything in the well
 collision :: Tetris -> Bool
 collision t = or (collision' t) 
 

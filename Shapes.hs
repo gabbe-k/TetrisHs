@@ -167,7 +167,7 @@ rowOverlap :: Row -> Row -> Bool
 rowOverlap [] _        = False
 rowOverlap _ []        = False
 rowOverlap (x:xs) (y:ys) | (x == Nothing) || (y == Nothing) = rowOverlap xs ys
-                          | otherwise = True
+                         | otherwise = True
 
 rowsOverlap :: [Row] -> [Row] -> [Bool]
 rowsOverlap r1     []     = []
